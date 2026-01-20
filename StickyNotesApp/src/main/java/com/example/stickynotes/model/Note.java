@@ -21,10 +21,15 @@ public class Note {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
     private User user;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "note_shares", joinColumns = @JoinColumn(name = "note_id"), inverseJoinColumns = @JoinColumn(name = "user_id"))
+    private java.util.Set<User> sharedWith = new java.util.HashSet<>();
+
+    private boolean isPrivate = false;
 
     @PrePersist
     protected void onCreate() {
@@ -85,5 +90,21 @@ public class Note {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public java.util.Set<User> getSharedWith() {
+        return sharedWith;
+    }
+
+    public void setSharedWith(java.util.Set<User> sharedWith) {
+        this.sharedWith = sharedWith;
+    }
+
+    public boolean isPrivate() {
+        return isPrivate;
+    }
+
+    public void setPrivate(boolean isPrivate) {
+        this.isPrivate = isPrivate;
     }
 }

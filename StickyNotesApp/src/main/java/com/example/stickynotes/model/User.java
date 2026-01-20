@@ -26,7 +26,14 @@ public class User {
 
     @NotBlank
     @Size(max = 120)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String password;
+
+    private String privatePin;
+
+    public boolean isHasPrivatePin() {
+        return privatePin != null && !privatePin.isEmpty();
+    }
 
     public User() {
     }
@@ -67,5 +74,13 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getPrivatePin() {
+        return privatePin;
+    }
+
+    public void setPrivatePin(String privatePin) {
+        this.privatePin = privatePin;
     }
 }

@@ -20,13 +20,44 @@ public class NoteService {
     @Autowired
     private NoteHistoryRepository noteHistoryRepository;
 
+    @Autowired
+    private com.example.stickynotes.repository.UserRepository userRepository;
+
     public List<Note> getAllNotes(Long userId) {
-        return noteRepository.findByUserId(userId);
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        return noteRepository.findByUserIdOrSharedWithContains(userId, user);
+    }
+
+    @Transactional
+    public void shareNote(Long noteId, String username, Long currentUserId) {
+        Note note = noteRepository.findById(noteId)
+                .orElseThrow(() -> new RuntimeException("Note not found with id: " + noteId));
+
+        if (!note.getUser().getId().equals(currentUserId)) {
+            throw new RuntimeException("Only the owner can share the note");
+        }
+
+        User userToShare = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found with username: " + username));
+
+        if (userToShare.getId().equals(currentUserId)) {
+            throw new RuntimeException("Cannot share with yourself");
+        }
+
+        note.getSharedWith().add(userToShare);
+        noteRepository.save(note);
+    }
+
+    public List<User> getPotentialShareUsers(Long currentUserId) {
+        return userRepository.findByIdNot(currentUserId);
     }
 
     @Transactional
     public Note createNote(Note note, User user) {
         note.setUser(user);
+        if (note.getSharedWith() == null) {
+            note.setSharedWith(new java.util.HashSet<>());
+        }
         Note savedNote = noteRepository.save(note);
 
         NoteHistory history = new NoteHistory(
@@ -44,7 +75,10 @@ public class NoteService {
         Note note = noteRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Note not found with id: " + id));
 
-        if (!note.getUser().getId().equals(userId)) {
+        boolean isOwner = note.getUser().getId().equals(userId);
+        boolean isShared = note.getSharedWith().stream().anyMatch(u -> u.getId().equals(userId));
+
+        if (!isOwner && !isShared) {
             throw new RuntimeException("Unauthorized access to note");
         }
 
