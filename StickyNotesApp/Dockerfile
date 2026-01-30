@@ -1,15 +1,23 @@
-# Use a lightweight JDK base image
-FROM eclipse-temurin:17-jdk-alpine
-
-# Set the working directory
+# Stage 1: Build the application
+FROM maven:3.9.4-eclipse-temurin-17 AS builder
 WORKDIR /app
 
-# Copy the built JAR file into the container
-ARG JAR_FILE=target/stickynotes-0.0.1-SNAPSHOT.jar
-COPY ${JAR_FILE} app.jar
+# Copy the Maven project files
+COPY pom.xml .
+COPY src ./src
+
+# Build the application (skip tests for faster build)
+RUN mvn clean package -DskipTests
+
+# Stage 2: Run the application
+FROM eclipse-temurin:17-jdk-alpine
+WORKDIR /app
+
+# Copy the built JAR from the builder stage
+COPY --from=builder /app/target/stickynotes-0.0.1-SNAPSHOT.jar app.jar
 
 # Expose port 9191
 EXPOSE 9191
 
-# Run the JAR file
+# Run the JAR
 ENTRYPOINT ["java", "-jar", "app.jar"]
