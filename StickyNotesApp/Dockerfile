@@ -1,15 +1,15 @@
-# Stage 1: Build the application
+# Stage 1: Build the Spring Boot app
 FROM maven:3.9.4-eclipse-temurin-17 AS builder
 WORKDIR /app
 
-# Copy the Maven project files
-COPY pom.xml .
-COPY src ./src
+# Copy only the app folder (StickyNotesApp) into the container
+COPY StickyNotesApp/pom.xml .
+COPY StickyNotesApp/src ./src
 
-# Build the application (skip tests for faster build)
+# Build the app (skip tests for faster build)
 RUN mvn clean package -DskipTests
 
-# Stage 2: Run the application
+# Stage 2: Run the app
 FROM eclipse-temurin:17-jdk-alpine
 WORKDIR /app
 
